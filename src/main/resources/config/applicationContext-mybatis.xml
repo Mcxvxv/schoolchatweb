@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd ">
+
+	<!-- 加载数据源特性文件 -->
+	<context:property-placeholder location="classpath:datasource.properties" />
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+
+	<!--定义数据库会话层对象 ，用到Spring对Mybatis的整合包-->
+	<!--本处定义的数据库会话层对象 ，Mybatis框架自动应用它到DAO层实现（SQL id与DAO接口映射）-->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionFactoryBean"> 
+		<property name="dataSource" ref="dataSource" />
+		<property name="typeAliasesPackage" value="com.wust.schoolchat.bean"/><!-- 定义映射文件结果类型的别名 -->
+		<property name="plugins"> <!-- 分页插件PageHelper -->
+			<array>
+				<bean class="com.github.pagehelper.PageHelper">
+					<property name="properties">
+						<value>
+							dialect=mysql
+						</value>
+					</property>
+				</bean>
+			</array>
+		</property>
+	</bean>
+	
+	<!-- 下面的代码，建立SQL id与DAO接口方法名的绑定关系，即映射扫描配置 ，相当于SSH中DAO层依赖设置-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <!-- 要求SQL id与DAO接口方法同名 -->
+		<property name="basePackage" value="com.wust.schoolchat.dao" />
+		<!-- Spring创建DAO对象时已注入了数据库会话对象特性 -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSession"/>
+	</bean>
+</beans>
